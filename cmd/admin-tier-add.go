@@ -167,7 +167,7 @@ func fetchTierConfig(ctx *cli.Context, tierName string, tierType madmin.TierType
 			fatalIf(errInvalidArgument().Trace(), fmt.Sprintf("%s remote tier requires target endpoint", tierType))
 		}
 
-		minioOpts := []madmin.MinIOOptions{}
+		minioOpts := []madmin.MinioOptions{}
 		prefix := ctx.String("prefix")
 		if prefix != "" {
 			minioOpts = append(minioOpts, madmin.MinIOPrefix(prefix))
