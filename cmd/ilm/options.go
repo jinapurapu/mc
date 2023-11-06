@@ -100,7 +100,7 @@ func (opts LifecycleOptions) ToILMRule() (lifecycle.Rule, *probe.Error) {
 		return "Enabled"
 	}()
 
-	expiry, err := parseExpiry(opts.ExpiryDate, opts.ExpiryDays, opts.ExpiredObjectDeleteMarker)
+	expiry, err := parseExpiry(opts.ExpiryDate, opts.ExpiryDays, opts.NewerNoncurrentExpirationVersions, opts.ExpiredObjectDeleteMarker)
 	if err != nil {
 		return lifecycle.Rule{}, err
 	}
@@ -348,7 +348,6 @@ func ApplyRuleFields(dest *lifecycle.Rule, opts LifecycleOptions) *probe.Error {
 			dest.RuleFilter.Prefix = *opts.Prefix
 		}
 	}
-
 	// only one of expiration day, date or transition day, date is expected
 	if opts.ExpiryDate != nil {
 		date, err := parseExpiryDate(*opts.ExpiryDate)
@@ -359,6 +358,12 @@ func ApplyRuleFields(dest *lifecycle.Rule, opts LifecycleOptions) *probe.Error {
 		// reset everything else
 		dest.Expiration.Days = 0
 		dest.Expiration.DeleteMarker = false
+	} else if opts.NewerNoncurrentExpirationVersions != nil {
+		versions, err := parseExpiryVersions(*opts.NewerNoncurrentExpirationVersions)
+		if err != nil {
+			return err
+		}
+		dest.NoncurrentVersionExpiration.NewerNoncurrentVersions = versions.NewerNoncurrentVersions
 	} else if opts.ExpiryDays != nil {
 		days, err := parseExpiryDays(*opts.ExpiryDays)
 		if err != nil {

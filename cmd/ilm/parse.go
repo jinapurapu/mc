@@ -241,8 +241,16 @@ func parseExpiryDays(expiryDayStr string) (lifecycle.ExpirationDays, *probe.Erro
 	return lifecycle.ExpirationDays(days), nil
 }
 
+func parseExpiryVersions(versions int) (lifecycle.NoncurrentVersionExpiration, *probe.Error) {
+
+	if versions == 0 {
+		return lifecycle.NoncurrentVersionExpiration{NewerNoncurrentVersions: 0}, probe.NewError(errors.New("expiration versions cannot be set to zero"))
+	}
+	return lifecycle.NoncurrentVersionExpiration{NewerNoncurrentVersions: versions}, nil
+}
+
 // Returns lifecycleExpiration to be included in lifecycleRule
-func parseExpiry(expiryDate, expiryDays *string, expiredDeleteMarker *bool) (lfcExp lifecycle.Expiration, err *probe.Error) {
+func parseExpiry(expiryDate, expiryDays *string, expiryVersions *int, expiredDeleteMarker *bool) (lfcExp lifecycle.Expiration, err *probe.Error) {
 	if expiryDate != nil {
 		date, err := parseExpiryDate(*expiryDate)
 		if err != nil {
@@ -250,8 +258,13 @@ func parseExpiry(expiryDate, expiryDays *string, expiredDeleteMarker *bool) (lfc
 		}
 		lfcExp.Date = date
 	}
-
-	if expiryDays != nil {
+	if expiryVersions != nil {
+		versions, err := parseExpiryVersions(*expiryVersions)
+		if err != nil {
+			return lifecycle.Expiration{}, err
+		}
+		lfcExp.Days = lifecycle.ExpirationDays(versions.NewerNoncurrentVersions)
+	} else if expiryDays != nil {
 		days, err := parseExpiryDays(*expiryDays)
 		if err != nil {
 			return lifecycle.Expiration{}, err
